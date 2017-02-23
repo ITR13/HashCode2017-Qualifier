@@ -10,7 +10,7 @@ var totalTimeSaved int
 type CacheServer struct {
 	ID, size  int
 	timeSaved TimeSaved
-	videos    []*CachedVideo
+	videos    map[int]*CachedVideo
 	endpoints map[int]*CacheEndpointLink
 }
 
@@ -43,7 +43,7 @@ func GetSystem(videoC, endpointC, cacheC int, cacheSize int) *System {
 	endpoints := make([]*Endpoint, endpointC)
 	for i := 0; i < cacheC; i++ {
 		caches[i] = &CacheServer{i, cacheSize, make(TimeSaved, videoC),
-			make([]*CachedVideo, 0), make(map[int]*CacheEndpointLink)}
+			make(map[int]*CachedVideo), make(map[int]*CacheEndpointLink)}
 	}
 	for i := 0; i < endpointC; i++ {
 		endpoints[i] = &Endpoint{make(map[int]*CacheEndpointLink, cacheC),
@@ -76,33 +76,64 @@ func (endpoint *Endpoint) RegisterRequest(video, times int) {
 //Note, cannot unregister yet
 //TODO consider not using append and [:]
 //TODO make it possible to remove video in any order
-func (cache *CacheServer) RegisterVideo(video, size int) {
-	save := cache.timeSaved[video]
+func (cache *CacheServer) RegisterVideo(vID, size int) {
+	save := cache.timeSaved[vID]
 	totalTimeSaved += save
 	cache.size -= size
-	cache.videos = append(cache.videos,
-		&CachedVideo{save, size})
+	cache.videos[vID] = &CachedVideo{save, size}
 	for _, link := range cache.endpoints {
 		ep := link.endpoint
-		rank := ep.cacheRanks[video]
+		rank := ep.cacheRanks[vID]
 		if rank.timeSaved < save {
-			oldTS := rank.timeSaved
-			rank.timeSaved = save
-			rank.cacheN = cache.ID
+			ep.ReplaceBest(vID, save, cache.ID)
+		}
+	}
+}
 
-			for _, link2 := range ep.caches {
-				linkSave := link.timeSavedPV[video] - save
-				if linkSave < 0 {
-					linkSave = 0
+func (cache *CacheServer) UnregisterVideo(vID int) {
+	video := cache.videos[vID]
+	delete(cache.videos, vID)
+	cache.size += video.size
+	if video.timeSaved != 0 {
+		for _, link := range cache.endpoints {
+			ep := link.endpoint
+			rank := ep.cacheRanks[vID]
+			if rank.cacheN == cache.ID {
+				bestID, bestSave := -1, -1
+				for cID, link2 := range ep.caches {
+					video := link2.cache.videos[vID]
+					if video != nil {
+						if link2.timeSavedPV[vID] > bestSave {
+							bestSave = link2.timeSavedPV[vID]
+							bestID = cID
+						}
+					}
 				}
 
-				link2.cache.timeSaved[video] -=
-					(link2.timeSavedPV[video] - linkSave) - oldTS
+				ep.ReplaceBest(vID, bestSave, bestID)
 			}
 		}
 	}
 }
 
-func (cache *CacheServer) UnregisterVideo(video, size int) {
+func (ep *Endpoint) ReplaceBest(vID, save, cID int) {
+	rank := ep.cacheRanks[vID]
+	oldTS := rank.timeSaved
+	rank.timeSaved = save
+	rank.cacheN = cID
 
+	for _, link2 := range ep.caches {
+		linkSave := link2.timeSavedPV[vID] - save
+		if linkSave < 0 {
+			linkSave = 0
+		}
+
+		link2.cache.timeSaved[vID] -=
+			(link2.timeSavedPV[vID] - linkSave) - oldTS
+
+		otherVideo := link2.cache.videos[vID]
+		if otherVideo != nil {
+			otherVideo.timeSaved -= linkSave
+		}
+	}
 }

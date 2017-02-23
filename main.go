@@ -1,9 +1,25 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 )
+
+func (ts TimeSaved) GetHighestUnder(max int, videoSizes []int) int {
+	h := -1
+	id := -1
+	for i := 0; i < len(ts); i++ {
+		if videoSizes[i] < max {
+			if ts[i] > h {
+				h = ts[i]
+				id = i
+			}
+		}
+	}
+	return id
+}
 
 func check(e error) {
 	if e != nil {
@@ -12,12 +28,48 @@ func check(e error) {
 }
 
 func main() {
-	system, videoSizes := ReadFile("current.in")
-	fmt.Println(system, videoSizes)
+	BadSolve("me_at_the_zoo")
+	BadSolve("trending_today")
+	BadSolve("videos_worth_spreading")
+}
+
+func BadSolve(name string) {
+	fmt.Println("Solving " + name)
+	system, videoSizes := ReadFile(name + ".in")
+
+	for i := 0; i < len(system.caches); i++ {
+		cache := system.caches[i]
+		for highest :=
+			cache.timeSaved.GetHighestUnder(cache.size,
+				videoSizes); highest != -1; highest =
+			cache.timeSaved.GetHighestUnder(cache.size, videoSizes) {
+			cache.RegisterVideo(highest, videoSizes[highest])
+		}
+	}
+
+	system.WriteFile(name + ".out")
+}
+
+func (system *System) WriteFile(path string) {
+	f, err := os.Create(path)
+	check(err)
+	defer f.Close()
+
+	writer := bufio.NewWriter(f)
+	writer.WriteString(strconv.Itoa(len(system.caches)) + "\n")
+
+	for i := 0; i < len(system.caches); i++ {
+		writer.WriteString(strconv.Itoa(i))
+		for vid, _ := range system.caches[i].videos {
+			writer.WriteString(" " + strconv.Itoa(vid))
+		}
+		writer.WriteString("\n")
+
+	}
 }
 
 func ReadFile(path string) (*System, []int) {
-	f, err := os.Open("current.in")
+	f, err := os.Open(path)
 	check(err)
 	defer f.Close()
 
@@ -33,7 +85,6 @@ func ReadFile(path string) (*System, []int) {
 		fmt.Fscanf(f, "%d", &(videoSizes[i]))
 	}
 	fmt.Fscanf(f, "%d\n", &(videoSizes[len(videoSizes)-1]))
-	fmt.Println("Video-Sizes: ", videoSizes)
 
 	system := GetSystem(videoC, endpointC, cacheC, cacheSize)
 
