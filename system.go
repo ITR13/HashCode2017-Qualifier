@@ -72,7 +72,8 @@ func (cache *CacheServer) RegisterVideo(video, size int) {
 		ep := cache.endpoints[i].endpoint
 		for j := 0; j < len(*ep); j++ {
 			link := (*ep)[j]
-			link.cache.timeSaved[video] = 0
+			link.cache.timeSaved[video] -= link.timeSavedPV[video]
+			link.timeSavedPV[video] = 0
 		}
 	}
 
