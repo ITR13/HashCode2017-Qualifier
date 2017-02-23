@@ -12,7 +12,8 @@ func check(e error) {
 }
 
 func main() {
-	ReadFile("current.in")
+	system, videoSizes := ReadFile("current.in")
+
 }
 
 func ReadFile(path string) (*System, []int) {
@@ -23,11 +24,16 @@ func ReadFile(path string) (*System, []int) {
 	var videoC, endpointC, rDescC, cacheC, cacheSize int
 	fmt.Fscanf(f, "%d %d %d %d %d\n",
 		&videoC, &endpointC, &rDescC, &cacheC, &cacheSize)
+
+	fmt.Printf("Videos: %d\nEndpoints: %d\nDescriptions: %d\nCaches: %d\nSize: %d\n",
+		videoC, endpointC, rDescC, cacheC, cacheSize)
+
 	videoSizes := make([]int, videoC)
 	for i := 0; i < videoC-1; i++ {
-		fmt.Fscanf(f, "%d ", &(videoSizes[i]))
+		fmt.Fscanf(f, "%d", &(videoSizes[i]))
 	}
 	fmt.Fscanf(f, "%d\n", &(videoSizes[len(videoSizes)-1]))
+	fmt.Println("Video-Sizes: ", videoSizes)
 
 	system := GetSystem(videoC, endpointC, cacheC, cacheSize)
 
@@ -43,8 +49,8 @@ func ReadFile(path string) (*System, []int) {
 
 	for i := 0; i < rDescC; i++ {
 		var videoN, endpointN, requests int
-		fmt.Fscanf(f, "%d %d %d", &videoN, &endpointN, &requests)
-		system.endpoints[i].RegisterRequest(videoN, requests)
+		fmt.Fscanf(f, "%d %d %d\n", &videoN, &endpointN, &requests)
+		system.endpoints[endpointN].RegisterRequest(videoN, requests)
 	}
 	return system, videoSizes
 }

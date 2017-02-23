@@ -37,6 +37,11 @@ func GetSystem(videoC, endpointC, cacheC int, cacheSize int) *System {
 		caches[i] = &CacheServer{cacheSize, make(TimeSaved, videoC),
 			make([]*CachedVideo, 0), make([]*CacheEndpointLink, 0)}
 	}
+	for i := 0; i < endpointC; i++ {
+		endPoint := make(Endpoint, 0)
+		endpoints[i] = &endPoint
+	}
+
 	return &System{caches, endpoints}
 }
 
@@ -44,7 +49,8 @@ func (system *System) MakeLinks(endpoint *Endpoint, ILatency int, cacheN []int, 
 	ep := Endpoint(make([]*CacheEndpointLink, len(cacheN)))
 	endpoint = &ep
 	for i := 0; i < len(ep); i++ {
-		cache := system.caches[cacheN[i]]
+		cn := cacheN[i]
+		cache := system.caches[cn]
 		ep[i] = &CacheEndpointLink{ILatency - latencies[i],
 			cache, endpoint, make(TimeSaved, len(cache.timeSaved))}
 		cache.endpoints = append(cache.endpoints, ep[i])
@@ -76,5 +82,8 @@ func (cache *CacheServer) RegisterVideo(video, size int) {
 			link.timeSavedPV[video] = 0
 		}
 	}
+}
+
+func (cache *CacheServer) UnregisterVideo(video, size int) {
 
 }
