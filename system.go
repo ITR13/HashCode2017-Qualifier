@@ -64,10 +64,10 @@ func (endpoint *Endpoint) RegisterRequest(video, times int) {
 //TODO make it possible to remove video in any order
 func (cache *CacheServer) RegisterVideo(video, size int) {
 	save := cache.timeSaved[video]
-	totalTimeSaved += cache.timeSaved[video]
+	totalTimeSaved += save
 	cache.size -= size
 	cache.videos = append(cache.videos,
-		&CachedVideo{cache.timeSaved[video], size})
+		&CachedVideo{save, size})
 	for i := 0; i < len(cache.endpoints); i++ {
 		ep := cache.endpoints[i].endpoint
 		for j := 0; j < len(*ep); j++ {

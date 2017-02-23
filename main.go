@@ -31,4 +31,20 @@ func ReadFile(path string) (*System, []int) {
 
 	system := GetSystem(videoC, endpointC, cacheC, cacheSize)
 
+	for i := 0; i < endpointC; i++ {
+		var ILatency, connected int
+		fmt.Fscanf(f, "%d %d\n", &ILatency, &connected)
+		cacheN, latencies := make([]int, connected), make([]int, connected)
+		for j := 0; j < connected; j++ {
+			fmt.Fscanf(f, "%d %d\n", &(cacheN[j]), &(latencies[j]))
+		}
+		system.MakeLinks(system.endpoints[i], ILatency, cacheN, latencies)
+	}
+
+	for i := 0; i < rDescC; i++ {
+		var videoN, endpointN, requests int
+		fmt.Fscanf(f, "%d %d %d", &videoN, &endpointN, &requests)
+		system.endpoints[i].RegisterRequest(videoN, requests)
+	}
+	return system, videoSizes
 }
