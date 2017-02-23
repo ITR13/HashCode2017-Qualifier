@@ -13,7 +13,7 @@ func check(e error) {
 
 func main() {
 	system, videoSizes := ReadFile("current.in")
-
+	fmt.Println(system, videoSizes)
 }
 
 func ReadFile(path string) (*System, []int) {
@@ -44,7 +44,7 @@ func ReadFile(path string) (*System, []int) {
 		for j := 0; j < connected; j++ {
 			fmt.Fscanf(f, "%d %d\n", &(cacheN[j]), &(latencies[j]))
 		}
-		system.MakeLinks(system.endpoints[i], ILatency, cacheN, latencies)
+		system.MakeLinks(i, ILatency, cacheN, latencies)
 	}
 
 	for i := 0; i < rDescC; i++ {
